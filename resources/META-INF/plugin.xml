@@ -1,0 +1,36 @@
+<idea-plugin>
+    <id>com.jetbrains.malenkov.color.blindness.support</id>
+    <name>ColorBlindnessSupport</name>
+    <version>0.1</version>
+    <vendor email="malenkov@gmail.com" url="http://sites.google.com/site/malenkov/">Sergey Malenkov</vendor>
+
+    <description><![CDATA[
+        For people with color vision deficiency:
+        a plug-in for IDEs based on the IntelliJ platform.
+    ]]></description>
+
+    <change-notes><![CDATA[
+      Added icon filters
+    ]]></change-notes>
+
+    <!-- please see http://www.jetbrains.org/intellij/sdk/docs/basics/getting_started/build_number_ranges.html for description -->
+    <idea-version since-build="163.5517"/>
+
+    <depends>com.intellij.modules.lang</depends>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <protanopiaSupport implementation="com.jetbrains.malenkov.color.blindness.support.ExtensionPoint$Protanopia"/>
+        <deuteranopiaSupport implementation="com.jetbrains.malenkov.color.blindness.support.ExtensionPoint$Deuteranopia"/>
+        <tritanopiaSupport implementation="com.jetbrains.malenkov.color.blindness.support.ExtensionPoint$Tritanopia"/>
+        <applicationService serviceImplementation="com.jetbrains.malenkov.color.blindness.support.SettingsState"/>
+        <applicationConfigurable instance="com.jetbrains.malenkov.color.blindness.support.SettingsView"
+                                 id="com.jetbrains.malenkov.color.blindness.support.settings"
+                                 displayName="ColorBlindness Support"
+                                 groupId="appearance"/>
+    </extensions>
+
+    <actions>
+        <!-- Add your actions here -->
+    </actions>
+
+</idea-plugin>

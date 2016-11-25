@@ -5,10 +5,13 @@ package com.jetbrains.malenkov.color.blindness.support;
  */
 public enum FilterType {
     DISABLED("Disabled"),
-    MATRIX("Predefined matrix"),
+    PREDEFINED_MATRIX("Predefined matrix"),
+    MODIFIED_MATRIX("Modified matrix"),
     CUSTOM_MATRIX("Custom matrix"),
     DALTONIZATION("Daltonization"),
-    SIMULATION("Simulation");
+    SIMULATION("Simulation"),
+    GRAY("Gray");
+
     private final String text;
 
     FilterType(String text) {

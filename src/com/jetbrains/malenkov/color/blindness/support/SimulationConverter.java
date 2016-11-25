@@ -1,14 +1,16 @@
 package com.jetbrains.malenkov.color.blindness.support;
 
+import com.intellij.ide.ui.ColorBlindness;
+
 final class SimulationConverter implements Converter {
 
-    static final Converter protanopia
+    private static final Converter PROTANOPIA
             = new SimulationConverter("Protanopia", 0.7465, 0.2535, 1.273463, -0.073894);
 
-    static final Converter deuteranopia
+    private static final Converter DEUTERANOPIA
             = new SimulationConverter("Deuteranopia", 1.4, -0.4, 0.968437, 0.003331);
 
-    static final Converter tritanopia
+    private static final Converter TRITANOPIA
             = new SimulationConverter("Tritanopia", 0.1748, 0, 0.062921, 0.292119);
 
     private final double myConfuseX;
@@ -84,5 +86,12 @@ final class SimulationConverter implements Converter {
         rgba[1] = Math.pow(dstG, 1 / 2.2);
         rgba[2] = Math.pow(dstB, 1 / 2.2);
         // return result via input parameter
+    }
+
+    static Converter getConverter(ColorBlindness blindness) {
+        if (blindness == ColorBlindness.protanopia) return PROTANOPIA;
+        if (blindness == ColorBlindness.deuteranopia) return DEUTERANOPIA;
+        if (blindness == ColorBlindness.tritanopia) return TRITANOPIA;
+        return null;
     }
 }

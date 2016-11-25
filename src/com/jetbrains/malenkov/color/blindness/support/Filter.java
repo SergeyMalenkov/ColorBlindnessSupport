@@ -6,23 +6,23 @@ import java.awt.image.RGBImageFilter;
  * @author Sergey.Malenkov
  */
 final class Filter extends RGBImageFilter {
-    private final Converter myConverter;
-    private final Double myWeight;
+    private final Converter converter;
+    private final Double weight;
 
     Filter(Converter converter, Double weight) {
         if (weight != null && (weight <= 0 || 1 <= weight)) {
             throw new IllegalArgumentException("weight " + weight + " out of [0..1]");
         }
         canFilterIndexColorModel = true;
-        myConverter = converter;
-        myWeight = weight;
+        this.converter = converter;
+        this.weight = weight;
     }
 
     @Override
     public String toString() {
-        String name = myConverter.toString();
-        return myWeight != null
-                ? name + " weight: " + myWeight
+        String name = converter.toString();
+        return weight != null
+                ? name + " weight: " + weight
                 : name;
     }
 
@@ -33,7 +33,7 @@ final class Filter extends RGBImageFilter {
         double g = convert(rgb >> 8);
         double b = convert(rgb);
         double[] rgba = {r, g, b, a};
-        myConverter.convert(rgba);
+        converter.convert(rgba);
         return ((convert(a, rgba[3]) << 24) |
                 (convert(r, rgba[0]) << 16) |
                 (convert(g, rgba[1]) << 8) |
@@ -45,13 +45,15 @@ final class Filter extends RGBImageFilter {
     }
 
     private int convert(double oldValue, double newValue) {
-        if (newValue < 0) {
+        if (!Double.isFinite(newValue)) {
+            newValue = 0;
+        } else if (newValue < 0) {
             newValue = 0;
         } else if (newValue > 255) {
             newValue = 255;
         }
-        if (myWeight != null) {
-            newValue = newValue * myWeight + oldValue * (1 - myWeight);
+        if (weight != null) {
+            newValue = newValue * weight + oldValue * (1 - weight);
         }
         return (int) (newValue + 0.5);
     }

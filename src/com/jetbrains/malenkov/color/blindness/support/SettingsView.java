@@ -2,6 +2,7 @@ package com.jetbrains.malenkov.color.blindness.support;
 
 import com.intellij.ide.ui.ColorBlindness;
 import com.intellij.ide.ui.ColorBlindnessSupport;
+import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.options.*;
 import com.intellij.openapi.ui.ComboBox;
@@ -14,6 +15,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.ChangeListener;
 import java.awt.*;
 import java.awt.event.ActionListener;
 import java.awt.image.ImageFilter;
@@ -88,11 +90,13 @@ public final class SettingsView extends TabbedConfigurable {
 
         private final class FilterPage implements UnnamedConfigurable {
             private final ActionListener comboListener = event -> updateFilter();
+            private final ChangeListener changeListener = event -> updateFilter();
 
             private ImageFilter filter;
             private JPanel panel;
             private JLabel error;
             private JComboBox<FilterType> combo;
+            private ModifiedMatrixView modified;
             private ColorView view;
 
             @Nullable
@@ -104,7 +108,9 @@ public final class SettingsView extends TabbedConfigurable {
                         JPanel north = new JPanel(new HorizontalLayout(5));
                         panel.add(BorderLayout.NORTH, north);
                         combo = new ComboBox<>(FilterType.values());
+                        modified = new ModifiedMatrixView();
                         north.add(combo);
+                        north.add(modified);
                     } else {
                         error = new JLabel();
                         panel.add(BorderLayout.NORTH, error);
@@ -117,6 +123,9 @@ public final class SettingsView extends TabbedConfigurable {
                 if (combo != null) {
                     combo.addActionListener(comboListener);
                 }
+                if (modified != null) {
+                    modified.addChangeListener(changeListener);
+                }
                 return panel;
             }
 
@@ -125,35 +134,36 @@ public final class SettingsView extends TabbedConfigurable {
                 if (combo != null) {
                     combo.removeActionListener(comboListener);
                 }
-
+                if (modified != null) {
+                    modified.removeChangeListener(changeListener);
+                }
             }
 
             @Override
             public boolean isModified() {
+                if (support instanceof ExtensionPoint) {
+                    FilterType type = getSelectedFilterType();
+                    Settings settings = SettingsState.get(blindness);
+                    if (type != getFilterType(settings.filterType)) return true;
+                    if (type == FilterType.MODIFIED_MATRIX && modified != null) {
+                        return modified.isModified(settings.modifierOne, settings.modifierTwo);
+                    }
+                    // TODO: support custom matrix
+                }
                 if (combo == null) return false;
 
-                FilterType type = getFilterType(combo.getSelectedItem());
-                Settings settings = SettingsState.get(blindness);
-                if (type != getFilterType(settings.filter)) return true;
-                if (type != FilterType.CUSTOM_MATRIX) return false;
-                // TODO
                 return false;
             }
 
             @Override
             public void apply() throws ConfigurationException {
                 if (support instanceof ExtensionPoint) {
+                    storeSettings(SettingsState.get(blindness));
                     ExtensionPoint point = (ExtensionPoint) support;
                     point.setFilter(filter);
                     if (blindness == UISettings.getShadowInstance().COLOR_BLINDNESS) {
                         IconLoader.setFilter(filter);
-                    }
-
-                    FilterType type = getFilterType(combo.getSelectedItem());
-                    Settings settings = SettingsState.get(blindness);
-                    settings.filter = type;
-                    if (type == FilterType.CUSTOM_MATRIX) {
-                        //TODO
+                        LafManager.getInstance().updateUI();
                     }
                 }
             }
@@ -161,35 +171,67 @@ public final class SettingsView extends TabbedConfigurable {
             @Override
             public void reset() {
                 Settings settings = SettingsState.get(blindness);
-                if (combo != null) combo.setSelectedItem(getFilterType(settings.filter));
-                // TODO
+                if (combo != null) combo.setSelectedItem(getFilterType(settings.filterType));
+                if (modified != null) modified.set(settings.filterType, settings.modifierOne, settings.modifierTwo);
+                // TODO: support custom matrix
+
                 filter = support.getFilter();
                 if (view != null) view.setFilter(filter);
                 if (error != null) error.setText(filter == null ? "No filter provided." : "The following filter provided:");
             }
 
+            private FilterType getSelectedFilterType() {
+                return getFilterType(combo == null ? null : combo.getSelectedItem());
+            }
+
             private void updateFilter() {
-                if (combo != null) {
-                    FilterType type = getFilterType(combo.getSelectedItem());
-                    //TODO
-                    filter = getFilter(blindness, type);
+                if (support instanceof ExtensionPoint) {
+                    Settings settings = new Settings();
+                    storeSettings(settings);
+                    filter = getFilter(blindness, settings);
                     if (view != null) view.setFilter(filter);
+                }
+            }
+
+            private void storeSettings(Settings settings) {
+                settings.filterType = getSelectedFilterType();
+                settings.filterWeight = null; // TODO: support weight
+                storeModifiedMatrix(settings);
+                // TODO: support custom matrix
+            }
+
+            private void storeModifiedMatrix(Settings settings) {
+                if (modified != null && settings.filterType == FilterType.MODIFIED_MATRIX) {
+                    settings.modifierOne = modified.getOne();
+                    settings.modifierTwo = modified.getTwo();
                 }
             }
         }
     }
 
-    static ImageFilter getFilter(ColorBlindness blindness) {
-        Settings settings = SettingsState.get(blindness);
-        return getFilter(blindness, settings.filter);
+    static ImageFilter getFilter(ColorBlindness blindness, Settings settings) {
+        if (settings == null) settings = SettingsState.get(blindness);
+        Converter converter = getConverter(blindness, settings);
+        return converter == null ? null : new Filter(converter, settings.filterWeight);
     }
 
-    private static ImageFilter getFilter(ColorBlindness blindness, FilterType type) {
-        if (type == FilterType.MATRIX) return MatrixFilter.get(blindness);
-        if (type == FilterType.CUSTOM_MATRIX) return MatrixFilter.get(blindness);
-        if (type == FilterType.DALTONIZATION) return DaltonizationFilter.get(blindness);
-        if (type == FilterType.SIMULATION) return SimulationFilter.get(blindness);
-        return null;
+    private static Converter getConverter(ColorBlindness blindness, Settings settings) {
+        switch (getFilterType(settings.filterType)) {
+            case PREDEFINED_MATRIX:
+                return ColorBlindnessMatrix.getConverter(blindness);
+            case MODIFIED_MATRIX:
+                return ColorBlindnessMatrix.getConverter(blindness, settings.modifierOne, settings.modifierTwo);
+            case CUSTOM_MATRIX:
+                return ColorBlindnessMatrix.getConverter(blindness); // TODO: support custom matrix
+            case DALTONIZATION:
+                return DaltonizationConverter.getConverter(blindness);
+            case SIMULATION:
+                return SimulationConverter.getConverter(blindness);
+            case GRAY:
+                return VectorConverter.GRAY;
+            default:
+                return null;
+        }
     }
 
     private static FilterType getFilterType(Object type) {

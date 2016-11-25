@@ -17,8 +17,6 @@ package com.jetbrains.malenkov.color.blindness.support;
 
 import com.intellij.ide.ui.ColorBlindness;
 import com.intellij.ide.ui.ColorBlindnessSupport;
-import com.intellij.ide.ui.UISettings;
-import com.intellij.openapi.util.IconLoader;
 
 import java.awt.image.ImageFilter;
 
@@ -26,19 +24,19 @@ public class ExtensionPoint extends ColorBlindnessSupport {
 
     public static final class Protanopia extends ExtensionPoint {
         public Protanopia() {
-            setFilter(SettingsView.getFilter(ColorBlindness.protanopia));
+            setFilter(SettingsView.getFilter(ColorBlindness.protanopia, null));
         }
     }
 
     public static final class Deuteranopia extends ExtensionPoint {
         public Deuteranopia() {
-            setFilter(SettingsView.getFilter(ColorBlindness.deuteranopia));
+            setFilter(SettingsView.getFilter(ColorBlindness.deuteranopia, null));
         }
     }
 
     public static final class Tritanopia extends ExtensionPoint {
         public Tritanopia() {
-            setFilter(SettingsView.getFilter(ColorBlindness.tritanopia));
+            setFilter(SettingsView.getFilter(ColorBlindness.tritanopia, null));
         }
     }
 

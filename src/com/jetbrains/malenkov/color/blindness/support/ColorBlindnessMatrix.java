@@ -1,5 +1,6 @@
 package com.jetbrains.malenkov.color.blindness.support;
 
+import com.intellij.ide.ui.ColorBlindness;
 import com.intellij.util.Matrix;
 import com.intellij.util.Vector;
 
@@ -72,12 +73,15 @@ final class ColorBlindnessMatrix {
         private static final double V1 = -WHITE_BLUE.get(1) / WHITE_BLUE.get(0);
         private static final double V2 = -WHITE_BLUE.get(2) / WHITE_BLUE.get(0);
         private static final Matrix SIMULATION = Matrix.create(3, 0, 0, 0, V1, 1, 0, V2, 0, 1);
-        private static final Matrix CORRECTION = Matrix.create(3, 1, .7, .7, 0, 1, 0, 0, 0, 1);
 
-        static final Matrix MATRIX = calculate(CORRECTION);
+        static final Converter CONVERTER = getConverter(.7, .7);
 
-        static Matrix calculate(Matrix correction) {
-            return ColorBlindnessMatrix.calculate(SIMULATION, correction);
+        static Matrix getMatrix(double one, double two) {
+            return calculate(SIMULATION, Matrix.create(3, 1, one, two, 0, 1, 0, 0, 0, 1));
+        }
+
+        static Converter getConverter(double one, double two) {
+            return new MatrixConverter("Protanopia", getMatrix(one, two));
         }
     }
 
@@ -85,12 +89,15 @@ final class ColorBlindnessMatrix {
         private static final double V1 = -WHITE_BLUE.get(0) / WHITE_BLUE.get(1);
         private static final double V2 = -WHITE_BLUE.get(2) / WHITE_BLUE.get(1);
         private static final Matrix SIMULATION = Matrix.create(3, 1, V1, 0, 0, 0, 0, 0, V2, 1);
-        private static final Matrix CORRECTION = Matrix.create(3, 1, 0, 0, .7, 1, .7, 0, 0, 1);
 
-        static final Matrix MATRIX = calculate(CORRECTION);
+        static final Converter CONVERTER = getConverter(.7, .7);
 
-        static Matrix calculate(Matrix correction) {
-            return ColorBlindnessMatrix.calculate(SIMULATION, correction);
+        static Matrix getMatrix(double one, double two) {
+            return calculate(SIMULATION, Matrix.create(3, 1, 0, 0, one, 1, two, 0, 0, 1));
+        }
+
+        static Converter getConverter(double one, double two) {
+            return new MatrixConverter("Deuteranopia", getMatrix(one, two));
         }
     }
 
@@ -98,12 +105,34 @@ final class ColorBlindnessMatrix {
         private static final double V1 = -WHITE_RED.get(0) / WHITE_RED.get(2);
         private static final double V2 = -WHITE_RED.get(1) / WHITE_RED.get(2);
         private static final Matrix SIMULATION = Matrix.create(3, 1, 0, V1, 0, 1, V2, 0, 0, 0);
-        private static final Matrix CORRECTION = Matrix.create(3, 1, 0, 0, 0, 1, 0, .7, .7, 1);
 
-        static final Matrix MATRIX = calculate(CORRECTION);
+        static final Converter CONVERTER = getConverter(.7, .7);
 
-        static Matrix calculate(Matrix correction) {
-            return ColorBlindnessMatrix.calculate(SIMULATION, correction);
+        static Matrix getMatrix(double one, double two) {
+            return calculate(SIMULATION, Matrix.create(3, 1, 0, 0, 0, 1, 0, one, two, 1));
         }
+
+        static Converter getConverter(double one, double two) {
+            return new MatrixConverter("Tritanopia", getMatrix(one, two));
+        }
+    }
+
+    static Converter getConverter(ColorBlindness blindness) {
+        if (blindness == ColorBlindness.protanopia) return Protanopia.CONVERTER;
+        if (blindness == ColorBlindness.deuteranopia) return Deuteranopia.CONVERTER;
+        if (blindness == ColorBlindness.tritanopia) return Tritanopia.CONVERTER;
+        return null;
+    }
+
+    static Converter getConverter(ColorBlindness blindness, Double one, Double two) {
+        if (!isValidModifier(one) || !isValidModifier(two)) return getConverter(blindness);
+        if (blindness == ColorBlindness.protanopia) return Protanopia.getConverter(one, two);
+        if (blindness == ColorBlindness.deuteranopia) return Deuteranopia.getConverter(one, two);
+        if (blindness == ColorBlindness.tritanopia) return Tritanopia.getConverter(one, two);
+        return null;
+    }
+
+    private static boolean isValidModifier(Double modifier) {
+        return modifier != null && 0 <= modifier && modifier <= 1;
     }
 }

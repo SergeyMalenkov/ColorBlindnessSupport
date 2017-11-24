@@ -12,6 +12,7 @@ import com.intellij.ui.UIBundle;
 import com.intellij.ui.components.panels.HorizontalLayout;
 import com.intellij.ui.components.panels.VerticalLayout;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -39,6 +40,7 @@ public final class SettingsView extends TabbedConfigurable {
         return null;
     }
 
+    @NotNull
     @Override
     protected List<Configurable> createConfigurables() {
         List<Configurable> list = new ArrayList<>();
@@ -75,7 +77,6 @@ public final class SettingsView extends TabbedConfigurable {
             return Collections.singletonList(new FilterPage());
         }
 
-        @Nullable
         @Override
         public JComponent createComponent() {
             JPanel panel = new JPanel(new VerticalLayout(10));
@@ -156,12 +157,12 @@ public final class SettingsView extends TabbedConfigurable {
             }
 
             @Override
-            public void apply() throws ConfigurationException {
+            public void apply() {
                 if (support instanceof ExtensionPoint) {
                     storeSettings(SettingsState.get(blindness));
                     ExtensionPoint point = (ExtensionPoint) support;
                     point.setFilter(filter);
-                    if (blindness == UISettings.getShadowInstance().COLOR_BLINDNESS) {
+                    if (blindness == UISettings.getShadowInstance().getColorBlindness()) {
                         IconLoader.setFilter(filter);
                         LafManager.getInstance().updateUI();
                     }

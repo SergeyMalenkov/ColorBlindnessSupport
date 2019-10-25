@@ -11,6 +11,8 @@ import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.awt.image.ImageFilter;
 
+import static com.intellij.util.ui.StartupUiUtil.drawImage;
+
 /**
  * @author Sergey.Malenkov
  */
@@ -47,9 +49,7 @@ final class ColorView extends JComponent {
         if (imageDefault != null) {
             if (imageCached == null) imageCached = ImageUtil.filter(imageDefault, imageFilter);
         } else if (imageCached == null || bounds.width != ImageUtil.getUserWidth(imageCached) || bounds.height != ImageUtil.getUserWidth(imageCached)) {
-            BufferedImage image = g instanceof Graphics2D
-                    ? UIUtil.createImageForGraphics((Graphics2D) g, bounds.width, bounds.height, BufferedImage.TYPE_INT_RGB)
-                    : UIUtil.createImage(bounds.width, bounds.height, BufferedImage.TYPE_INT_RGB);
+            BufferedImage image = ImageUtil.createImage(g, bounds.width, bounds.height, BufferedImage.TYPE_INT_RGB);
 
             int width = ImageUtil.getRealWidth(image);
             int height = ImageUtil.getRealHeight(image);
@@ -70,7 +70,7 @@ final class ColorView extends JComponent {
                 imageCached = RetinaImage.createFrom(imageCached);
             }
         }
-        UIUtil.drawImage(g, imageCached, bounds.x, bounds.y, bounds.width, bounds.height, this);
+        drawImage(g, imageCached, bounds, null, this);
     }
 
     void setFilter(ImageFilter filter) {

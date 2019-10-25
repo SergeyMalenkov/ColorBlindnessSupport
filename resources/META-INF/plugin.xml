@@ -1,7 +1,7 @@
 <idea-plugin>
     <id>com.jetbrains.malenkov.color.blindness.support</id>
     <name>ColorBlindnessSupport</name>
-    <version>0.2</version>
+    <version>0.3</version>
     <vendor email="malenkov@gmail.com" url="http://sites.google.com/site/malenkov/">Sergey Malenkov</vendor>
 
     <description><![CDATA[
@@ -10,11 +10,11 @@
     ]]></description>
 
     <change-notes><![CDATA[
-      Added icon filters
+      Do not use removed API
     ]]></change-notes>
 
     <!-- please see http://www.jetbrains.org/intellij/sdk/docs/basics/getting_started/build_number_ranges.html for description -->
-    <idea-version since-build="171.2931"/>
+    <idea-version since-build="192.4642"/>
 
     <depends>com.intellij.modules.lang</depends>
 
